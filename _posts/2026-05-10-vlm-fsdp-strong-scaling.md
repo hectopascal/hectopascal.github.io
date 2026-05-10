@@ -5,6 +5,7 @@ date: 2026-05-08 15:09:00
 description: An Engineering Case Study
 tags: distributed-training fsdp profiling vlm
 categories: engineering
+giscus_comments: true
 featured: true
 toc:
   beginning: true
