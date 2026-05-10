@@ -19,9 +19,9 @@ function determineGiscusTheme() {
   let giscusAttributes = {
     src: "https://giscus.app/client.js",
     "data-repo": "hectopascal/hectopascal.github.io",
-    "data-repo-id": "",
+    "data-repo-id": "R_kgDOSZX63Q",
     "data-category": "Comments",
-    "data-category-id": "",
+    "data-category-id": "DIC_kwDOSZX63c4C8trq",
     "data-mapping": "title",
     "data-strict": "1",
     "data-reactions-enabled": "1",
