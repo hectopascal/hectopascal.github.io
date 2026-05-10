@@ -85,7 +85,7 @@ In the profiler trace, it did what it was supposed to do. The NCCL all-gathers b
 
 However, throughput did not improve meaningfully: 3059 ± 99 tok/s versus 3164 ± 59 tok/s.
 
-Diagnosis: bandwidth contention. Unlike A100s, V100s lack NVSwitch and provides limited cross-rank bandwidth. On V100 NVLink, the link is already saturated during all-gather, so overlapping doesn't help. We're just shifting bottleneck time around without reducing it. The trace shows overlap but the wall clock shows it didn't matter because the bandwidth ceiling was the limit, not the scheduling.
+Diagnosis: bandwidth contention.The 8×V100 instance I used did not appear to have the all-to-all NVSwitch topology typical of newer A100/H100 training boxes. On V100 NVLink, the link is already saturated during all-gather, so overlapping doesn't help. We're just shifting bottleneck time around without reducing it. The trace shows overlap but the wall clock shows it didn't matter because the bandwidth ceiling was the limit, not the scheduling.
 
 # What I learned
 
