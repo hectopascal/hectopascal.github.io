@@ -3,12 +3,14 @@ layout: post
 title: A VLM, FSDP, and the Lie My Strong-Scaling Numbers Told Me
 date: 2026-05-08 15:09:00
 description: An Engineering Case Study
-tags: formatting code
-categories: sample-posts
+tags: distributed-training fsdp profiling vlm
+categories: engineering
 featured: true
 toc:
   beginning: true
 ---
+
+[link to github repo](https://github.com/hectopascal/tinyvlm-implementation)
 
 # Why I built this
 
@@ -30,7 +32,7 @@ SigLIP vision encoder -> projector + Qwen LM token stream.
 
 The important mental model is that the image is not magical to the language model. After projection, image patches become embedding vectors inserted into the LM’s sequence.
 
-The splice operation is the runtime trick that makes this work. The text contains an <image> bookmark token. During multimodal preprocessing, that bookmark is replaced with the image patch embeddings. The LM then sees one long embedding sequence: some text, then image-derived vectors, then more text.
+The splice operation is the runtime trick that makes this work. The text contains an `<image>` bookmark token. During multimodal preprocessing, that bookmark is replaced with the image patch embeddings. The LM then sees one long embedding sequence: some text, then image-derived vectors, then more text.
 
 This is the part I wanted to implement by hand. Not because the code is glamorous, but because this is where the abstraction becomes concrete. A lot of VLM architecture becomes less mysterious once you see that the “multimodal” part is, in practice, a carefully arranged embedding sequence.
 
@@ -82,7 +84,7 @@ In the profiler trace, it did what it was supposed to do. The NCCL all-gathers b
 
 However, throughput did not improve meaningfully: 3059 ± 99 tok/s versus 3164 ± 59 tok/s.
 
-Diagnosis: bandwidth contention. Unlike A100s, V100s lacks NVSwitch and provides limited cross-rank bandwidth. On V100 NVLink, the link is already saturated during all-gather, so overlapping doesn't help. We're just shifting bottleneck time around without reducing it. The trace shows overlap but the wall clock shows it didn't matter because the bandwidth ceiling was the limit, not the scheduling.
+Diagnosis: bandwidth contention. Unlike A100s, V100s lack NVSwitch and provides limited cross-rank bandwidth. On V100 NVLink, the link is already saturated during all-gather, so overlapping doesn't help. We're just shifting bottleneck time around without reducing it. The trace shows overlap but the wall clock shows it didn't matter because the bandwidth ceiling was the limit, not the scheduling.
 
 # What I learned
 
