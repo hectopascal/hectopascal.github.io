@@ -9,7 +9,7 @@ profile:
   # image: prof_pic.jpg
   image_circular: false # crops the image to make it circular
   more_info: >
-    <p>Just another AIML enthusiast</p>
+    <p>RL and post-training systems. building verifiable rewards.</p>
 
 selected_papers: false # includes a list of papers marked as "selected={true}"
 social: true # includes social icons at the bottom of the page
