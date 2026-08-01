@@ -41,17 +41,6 @@ ninja.data = [{
             window.location.href = "/blog/2026/vlm-fsdp-strong-scaling/";
           
         },
-      },{id: "post-when-rl-benchmarks-lie",
-        
-          title: "When RL Benchmarks Lie",
-        
-        description: "A measurement-theory view of RL post-training — what a benchmark number estimates, which uncertainties an error bar does and does not cover, and why a rising number can support far less than it appears to",
-        section: "Posts",
-        handler: () => {
-          
-            window.location.href = "/blog/2026/when-rl-benchmarks-lie/";
-          
-        },
       },{id: "books-the-godfather",
           title: 'The Godfather',
           description: "",
