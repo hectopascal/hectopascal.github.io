@@ -5,8 +5,9 @@ date: 2026-04-28 20:00:00
 description: A measurement-theory view of RL post-training — what a benchmark number estimates, which uncertainties an error bar does and does not cover, and why a rising number can support far less than it appears to
 tags: rl post-training evaluation reproducibility reasoning
 categories: research
+published: false
 giscus_comments: true
-featured: true
+featured: false
 toc:
   beginning: true
 ---
