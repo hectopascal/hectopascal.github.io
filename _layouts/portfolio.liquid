@@ -1,0 +1,43 @@
+---
+layout: default
+---
+<div class="portfolio">
+  <section class="portfolio-intro" aria-labelledby="intro-title">
+    <p class="eyebrow">LLM post-training · Reinforcement learning · Multimodal systems</p>
+    <h1 id="intro-title">Yi Yan Ng</h1>
+    <p class="portfolio-role">Senior Machine Learning Engineer at Meta · London</p>
+    <p class="portfolio-bio">
+      I build and evaluate machine learning systems. My research projects span prompt selection for LLM post-training, credit-assignment diagnostics,
+      and offline reinforcement learning. I also implement and profile multimodal training systems.
+    </p>
+    <p class="portfolio-bio">
+      I’m interested in how training choices and evaluation design affect what we can conclude about a model’s improvements.
+    </p>
+    <div class="portfolio-links" aria-label="Contact and profiles">
+      <a class="portfolio-button" href="{{ '/assets/pdf/yi-yan-ng-cv.pdf' | relative_url }}">CV <span class="link-detail">PDF</span></a>
+      <a href="https://github.com/Hectopascal">GitHub ↗</a>
+      <a href="mailto:ng.yiyan314@gmail.com">Email ↗</a>
+      <a href="https://www.linkedin.com/in/ngyiyan">LinkedIn ↗</a>
+    </div>
+  </section>
+  <section aria-labelledby="work-title">
+    <div class="portfolio-section-heading">
+      <h2 id="work-title">Selected work</h2>
+      <a href="{{ '/research/' | relative_url }}">All research & engineering →</a>
+    </div>
+    {% include research_work.liquid featured=true %}
+  </section>
+  <section class="portfolio-background" aria-labelledby="background-title">
+    <h2 id="background-title">Background</h2>
+    <p>
+      At Meta, I work on production ML in Integrity, including LLM post-training, model distillation, and automated labeling. Previously, I built ML
+      systems at Farfetch and Hypotenuse AI.
+    </p>
+    <p>I hold an MSc in Computer Science from NYU and first-class honours degrees in Statistics and Computer Science from UNSW.</p>
+  </section>
+  <section class="portfolio-contact" aria-labelledby="contact-title">
+    <h2 id="contact-title">Let’s talk research.</h2>
+    <p>I welcome conversations about post-training, evaluation, and multimodal learning.</p>
+    <a href="mailto:ng.yiyan314@gmail.com">ng.yiyan314@gmail.com ↗</a>
+  </section>
+</div>

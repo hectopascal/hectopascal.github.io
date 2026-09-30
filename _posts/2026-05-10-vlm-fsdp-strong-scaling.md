@@ -11,7 +11,7 @@ toc:
   beginning: true
 ---
 
-[link to github repo](https://github.com/hectopascal/tinyvlm-implementation)
+[Code on GitHub](https://github.com/hectopascal/tinyvlm-implementation)
 
 # Why I built this
 
@@ -23,7 +23,7 @@ The project had two parts.
 
 First, I implemented a small VLM using a SigLIP-2 vision encoder, a Qwen2.5 language model, and a two-layer MLP projector. I also implemented the image-token splice manually: replace the `<image>` placeholder token in the text sequence with projected image patch embeddings, then feed the resulting continuous multimodal sequence into the LM.
 
-Second, I scaled the setup with FSDP across 2, 4, and 8 V100s, using a larger Qwen2.5-1.5B LM and the full LLaVA-Pretrain dataset. I expected scaling efficiency to degrade at 8 GPUs. Instead, I initially got superlinear speedup.
+Second, I scaled the setup with FSDP across 2, 4, and 8 V100s, using a larger Qwen2.5-1.5B LM and data from LLaVA-Pretrain. I expected scaling efficiency to degrade at 8 GPUs. Instead, my throughput benchmark reported superlinear speedup.
 
 Naturally, this was suspicious. Computers are many things, but they are rarely generous.
 
@@ -39,17 +39,21 @@ This is the part I wanted to implement by hand. Not because the code is glamorou
 
 # Training stages
 
-I used a two-stage training setup.
+The intended training setup had two stages.
 
 In stage 1, the projector is trained to align the vision encoder’s output with the language model’s embedding space. The vision encoder and LM are mostly fixed; the projector learns to produce embeddings that the LM can consume usefully.
 
-In stage 2, the LM is unfrozen and fine-tuned together with the projector, using LoRA. At this point, the model can adapt more broadly, but it is no longer just learning “how do I translate vision features into LM-space?” It is also changing how the LM responds to those multimodal inputs.
+In stage 2, LoRA adapters in the LM are trained together with the projector, while the base LM weights remain frozen. At this point, the model can also adapt how it responds to those multimodal inputs.
 
-I cared more about the implementation and scaling behavior than squeezing out the best VLM quality. The model produced short, on-topic, generic captions after stage 1, which was enough to confirm that the data path worked. The interesting part came later, when the training loop met distributed systems and immediately became less innocent.
+The linked implementation trains the projector and LoRA adapters together.
+
+I cared more about the implementation and scaling behavior than squeezing out the best VLM quality. The early model produced short, on-topic, generic captions, which was enough for a basic check of the data path. The interesting part came later, when the training loop met distributed systems and immediately became less innocent.
 
 # Scaling setup
 
 For the scaling study, I used Qwen2.5-1.5B as the language model and trained with FSDP across 2, 4, and 8 V100s. The original plan was to use A100s. Then cloud pricing performed its usual spiritual cleansing exercise on my ambitions, so V100s it was.
+
+The saved benchmark configurations use a 10,000-example subset of LLaVA-Pretrain and fp16, keeping the effective batch size at 32 by adjusting gradient accumulation. The throughput numbers below use the training loop's padded-text-token metric.[^throughput]
 
 # Results
 
@@ -59,64 +63,68 @@ The first strong-scaling result looked great.
 
 Too great.
 
-The no-checkpoint runs appeared to show superlinear scaling: 8 GPUs looked **5.8× faster** than 2 GPUs, significantly above the 4× ideal. 
+The no-checkpoint runs appeared to show superlinear scaling: 8 GPUs reported **5.80× the throughput** of 2 GPUs, above the 4× ideal.
 
-{% include figure.liquid loading="eager" path="assets/img/scaling.png" class="img-fluid rounded z-depth-1" %}
+{% include figure.liquid loading="eager" path="assets/img/scaling.png" class="img-fluid rounded z-depth-1" alt="Throughput and peak allocated memory across 2, 4, and 8 GPUs, with and without activation checkpointing." caption="Reported throughput, mean ± sample SD across runs, and rank-0 peak allocated memory." %}
 
-I reran the experiment and profiled the memory which showed that the 2-GPU baseline was under memory pressure, using about 12.94GB of 16GB, so the performance was likely worse than what a clean baseline should be. The original baseline was unhealthy. 
+My suspicion was that the 2-GPU baseline used the hardware inefficiently. Adding GPUs could then improve throughput both by adding resources and by reducing overhead per unit of work.
 
-Activation checkpointing reduced 2-GPU memory to 9.93GB and gave a much more honest near-linear result: **4.07× from 2 to 8 GPUs, about 102% of ideal**.
+Memory pressure was one candidate: the 2-GPU baseline reported 12.94 GB of peak allocated tensor memory on nominally 16 GB GPUs. Activation checkpointing reduced that figure to 9.93 GB and brought the endpoint ratio close to linear: **4.07× from 2 to 8 GPUs, about 102% of ideal**.
 
-The lesson: strong-scaling numbers are only as honest as the baseline. If the smallest configuration is memory-bound, larger configurations can look artificially impressive. You are not measuring pure parallel efficiency anymore. You are measuring parallelism plus the relief of memory pressure.
+That looked reassuring, but checkpointing also lowered absolute throughput, especially at 8 GPUs. Its recomputation cost changed the comparison too, so the more ordinary ratio did not prove that memory pressure caused the original result.
 
+The lesson: inspect the baseline before celebrating the scaling number. A smaller configuration that uses the hardware poorly can make the speedup look unusually impressive. That remained my working explanation here; the experiment did not isolate the underlying bottleneck.
 
 ## Profiling
 
-Then I profiled the 8-GPU run. The trace showed communication-bound behavior. FSDP all-gathers were keeping the NCCL stream busy, while the compute stream had idle gaps between layers. In other words, the GPUs were often waiting for parameters to arrive before they could do useful work.
+Then I profiled the 8-GPU run. FSDP all-gathers kept the NCCL stream busy, while the model-compute stream had gaps between layers. That suggested parameter communication was worth investigating.
 
-{% include figure.liquid loading="eager" path="assets/img/nockpt.png" class="img-fluid rounded z-depth-1" %}
-Measuring within a single ProfilerStep, the compute stream was occupied roughly 40% of the time, while the NCCL stream ran continuously across the entire forward pass — three back-to-back nccl:_all_gather_base calls with no gaps. The GPU was idle more than half the step, waiting for parameters to arrive.
+{% include figure.liquid loading="eager" path="assets/img/nockpt.png" class="img-fluid rounded z-depth-1" alt="Profiler crop without forward prefetch, showing repeated NCCL all-gathers and gaps between model-compute kernels." caption="Forward-pass crop without forward prefetch." %}
 
-So I tried the textbook fix: fsdp_forward_prefetch=True. This allows the model to fetch parameters for the next layer early while it is computing the current layer. In theory, this should hide communication behind computation. PyTorch’s FSDP tutorial describes prefetching as a way to overlap all-gathers with computation.
+So I tried `fsdp_forward_prefetch=True`, which requests the next forward all-gather earlier. The idea was to make parameters available sooner and reduce waiting.
 
-{% include figure.liquid loading="eager" path="assets/img/nockpt_prefetch.png" class="img-fluid rounded z-depth-1" %}
+{% include figure.liquid loading="eager" path="assets/img/nockpt_prefetch.png" class="img-fluid rounded z-depth-1" alt="Profiler crop with forward prefetch, showing NCCL all-gathers alongside model-compute kernels." caption="Forward-pass crop with prefetch. The screenshots use different time scales." %}
 
-In the profiler trace, it did what it was supposed to do. The NCCL all-gathers became more tightly packed, and there was visible overlap. 
+The prefetch trace showed tightly packed all-gathers and visible overlap with compute, though some overlap was already present without it.
 
-However, throughput did not improve meaningfully: 3059 ± 99 tok/s versus 3164 ± 59 tok/s.
+However, the runs showed no throughput gain: **3,059 ± 103 tok/s** with prefetch versus **3,164 ± 59 tok/s** without it (mean ± sample SD, four runs each).
 
-Diagnosis: bandwidth contention.The 8×V100 instance I used did not appear to have the all-to-all NVSwitch topology typical of newer A100/H100 training boxes. On V100 NVLink, the link is already saturated during all-gather, so overlapping doesn't help. We're just shifting bottleneck time around without reducing it. The trace shows overlap but the wall clock shows it didn't matter because the bandwidth ceiling was the limit, not the scheduling.
+My working explanation was bandwidth contention: fetching earlier may not help much if transfers already compete for the same links. I did not measure link utilization, so saturation remained a hypothesis. What I could see was that changing the schedule did not improve the reported throughput.
 
 # What I learned
 
-My main takeaway is to interpret my results with suspicion, and always make sure you have a clean baseline.
+My main takeaway is to inspect the baseline and the absolute rates before interpreting a scaling ratio.
 
 The first result said: “8 GPUs gives 5.80× speedup over 2 GPUs.”
 
-The better interpretation was: “The 2-GPU baseline is memory-constrained, so the apparent scaling efficiency is inflated.”
+My working interpretation is: “The 2-GPU configuration may be an inefficient baseline, so adding GPUs may also reduce overhead per unit of work.”
 
-Activation checkpointing fixed the interpretation. It reduced memory pressure in the baseline and recovered a much more honest scaling picture: near-linear 2-to-8 GPU scaling, not a miracle.
+The distinction matters: a scaling ratio reflects how well both configurations use their hardware.
 
-The second lesson is that profiler traces are necessary but not sufficient. fsdp_forward_prefetch=True produced the expected trace-level overlap, but it did not improve throughput. Optimization attempts need to be judged by end-to-end performance, not just by whether the trace looks more aesthetically pleasing.
+The second lesson is that profiler traces need to be checked against performance measurements. `fsdp_forward_prefetch=True` changed the trace without improving throughput. An optimization needs to earn its place in the measurements, even if the trace looks more aesthetically pleasing.
 
-The third lesson is that hardware topology matters. FSDP behavior on 8 V100s is not the same as FSDP behavior on newer A100/H100 clusters. At this scale, the bottleneck shifted from memory pressure to communication bandwidth.
+The third lesson is that hardware topology belongs in the setup. The actual connections between GPUs matter when deciding what communication can be hidden.
 
 # Where I'd go next
 
-Given more time and a more emotionally supportive GPU budget, I would rerun the study on A100s with bf16 instead of V100s with fp16. V100s lack native bf16 support, and the 8-GPU interconnect topology makes FSDP all-gather behavior less favorable than on newer NVSwitch-based systems.
+First, I would compare full-iteration wall time for equal global work and profile both the 2- and 8-GPU runs. That would help distinguish the baseline's memory and communication costs.
 
-I would also compare pure FSDP against tensor parallelism or hybrid parallelism. FSDP is a good default, but once all-gather communication dominates, it is worth asking whether sharding parameters alone is the right parallelization strategy.
+Given more time and a more emotionally supportive GPU budget, I would rerun the study on an A100 system with bf16 and compare across a known interconnect topology.
 
-Finally, I would profile with Nsight Systems rather than relying only on torch.profiler. The PyTorch profiler was enough to identify the broad communication-bound pattern, but kernel-level analysis would give a cleaner view of where the time actually goes.
+If those measurements show all-gather communication dominating, I would compare pure FSDP against tensor parallelism or hybrid parallelism.
+
+Finally, I would use Nsight Systems alongside `torch.profiler` to examine host scheduling and GPU activity across ranks in more detail.
 
 # Conclusion
 
 This project started as a way to demystify VLM internals. The implementation part made the architecture feel less magical: image embeddings are projected, spliced into the token stream, and consumed by the LM as part of one continuous sequence.
 
-The scaling part was more interesting. The headline result looked like superlinear scaling, but the real finding was that the baseline was memory-constrained. Once activation checkpointing relieved that pressure, the scaling story became much more honest: FSDP scaled close to linearly from 2 to 8 V100s, then became increasingly communication-bound.
+The scaling part was more interesting. A suspiciously good result made me look harder at the baseline. Checkpointing changed the memory footprint and scaling curve; prefetch changed the trace without improving throughput. My working explanation was still that the smaller configuration used the hardware inefficiently, but a plausible explanation and an isolated cause are different things.
 
-That is probably the most useful outcome of the project. Not “I trained a tiny VLM.” Not even “I scaled it across 8 GPUs.”
-
-More like: I got a result that looked too good, did not trust it, profiled it, and found the boring reason underneath.
+I got a result that looked too good, did not trust it, and used it to work out what to measure next.
 
 Which, in machine learning systems, is often where the actual engineering begins.
+
+_Updated 7 September 2026 to clarify the measurement and interpretation, and correct the prefetch standard deviation._
+
+[^throughput]: The [saved loop](https://github.com/hectopascal/tinyvlm-implementation/blob/c1656c2ef4a169605ea8ac860240d70f9d85248c/train_fsdp.py#L95-L140) averages the final 50 microstep rates, counting padded text positions on rank 0 and multiplying by GPU count. Timing starts after batch fetch; inserted image embeddings are excluded from the count. This is an approximate training-body rate, not end-to-end useful-token throughput.

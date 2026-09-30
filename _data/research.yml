@@ -1,0 +1,52 @@
+- id: agent-credit-bench
+  title: AgentCreditBench
+  area: Reinforcement learning · Evaluation
+  status: Open-source software
+  featured: true
+  summary: Exact-oracle diagnostics that separate identifying helpful actions from inducing the intended policy gradient.
+  contribution: Built a CPU benchmark for turn-level credit assignment and compared advantage computations across RL frameworks.
+  detail: Tiny finite-horizon environments make exact reference values available. The suite includes reproducibility scripts and checks against pinned framework implementations.
+  scope: These are controlled diagnostic environments; agreement does not establish downstream language-model training performance.
+  links:
+    - label: Project & results
+      url: https://hectopascal.github.io/agent-credit-bench/
+    - label: Code
+      url: https://github.com/hectopascal/agent-credit-bench
+- id: probe-selection
+  title: Probe-guided prompt selection
+  area: LLM post-training · Data selection
+  status: Research study
+  featured: true
+  summary: Investigating whether lightweight probes can select informative prompts before spending compute on full rollouts.
+  contribution: Contributed post-training experiments and coding evaluation on OctoThinker-1B, comparing probe-guided selection with GRPO, DAPO, and LILO baselines.
+  detail: The study uses logistic-regression probes on model activations to estimate prompt usefulness, with predictor updates as the policy changes during training.
+  scope: Collaborative research at the workshop-manuscript stage; this entry describes my experimental contribution.
+  links:
+    - label: Contribution in CV
+      url: /assets/pdf/yi-yan-ng-cv.pdf
+- id: vlm-scaling
+  title: VLM training & FSDP scaling
+  area: Multimodal learning · Distributed systems
+  status: Engineering case study
+  featured: true
+  summary: Implementing a VLM and investigating suspicious scaling measurements across 2, 4, and 8 V100 GPUs.
+  contribution: Built the image-token insertion and training pipeline using SigLIP-2, Qwen2.5, and a projector; profiled FSDP communication and tested forward prefetching.
+  detail: Prefetching changed the profiler trace without improving measured throughput. Activation checkpointing changed the scaling curve, but did not isolate the cause of the original superlinear result.
+  scope: The write-up documents the throughput metric, repeated measurements, and the limits of the bottleneck interpretation.
+  links:
+    - label: Read the case study
+      url: /blog/2026/vlm-fsdp-strong-scaling/
+    - label: Code
+      url: https://github.com/hectopascal/tinyvlm-implementation
+- id: offline-rl
+  title: Offline RL for generative policies
+  area: Offline reinforcement learning · Diffusion & flow policies
+  status: Manuscript in preparation
+  featured: false
+  summary: Empirical evaluation of offline RL methods using diffusion and flow policies.
+  contribution: Designed and conducted multi-seed experiments and ablations across D4RL locomotion and AntMaze, studying gradient clipping, energy temperature, and candidate perturbations.
+  detail: Investigated optimization instability through training diagnostics and candidate-level analyses.
+  scope: Ongoing collaborative research on optimization behavior in generative policies.
+  links:
+    - label: Contribution in CV
+      url: /assets/pdf/yi-yan-ng-cv.pdf

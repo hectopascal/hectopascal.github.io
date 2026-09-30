@@ -2,18 +2,17 @@
 # Site settings
 # -----------------------------------------------------------------------------
 
-title: My Website # the website title (if blank, full name will be used instead)
-first_name: Yi Yan 
+title: Yi Yan Ng
+first_name: Yi Yan
 last_name: Ng
 contact_note: >
-  You can even add a little note about which of these is the best way to reach you.
-description: > # the ">" symbol means to ignore newlines until "footer_text:"
-  A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design.
+  For research conversations and collaboration, email is the best way to reach me.
+description: >
+  Yi Yan Ng is a Senior Machine Learning Engineer at Meta in London, working on LLM post-training, reinforcement learning evaluation, and multimodal training systems.
 footer_text: >
   Powered by <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> with <a href="https://github.com/alshedivat/al-folio">al-folio</a> theme.
   Hosted by <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>.
-  Photos from <a href="https://unsplash.com" target="_blank">Unsplash</a>.
-keywords: jekyll, jekyll-theme, academic-website, portfolio-website # add your own keywords or leave empty
+keywords: Yi Yan Ng, machine learning, reinforcement learning, post-training, multimodal, research engineering
 lang: en # the language of your site (for example: en, fr, cn, ru, etc.)
 icon: 🐟 # the emoji used as the favicon (alternatively, provide image name in /assets/img/)
 
@@ -53,8 +52,8 @@ external_services:
 # -----------------------------------------------------------------------------
 
 navbar_fixed: true
-footer_fixed: true
-search_enabled: true
+footer_fixed: false
+search_enabled: false
 socials_in_search: true
 posts_in_search: true
 bib_search: true
@@ -67,7 +66,7 @@ max_width: 930px
 # -----------------------------------------------------------------------------
 # Display links to the page with a preview object on social media.
 # see https://schema.org/docs/faq.html for more information
-serve_og_meta: false # Include Open Graph meta tags in the HTML head
+serve_og_meta: true # Include Open Graph meta tags in the HTML head
 serve_schema_org: false # Include Schema.org in the HTML head
 og_image: # The site-wide (default for all links) Open Graph preview image
 
@@ -90,8 +89,8 @@ bing_site_verification: # out your bing-site-verification ID (Bing Webmaster)
 # Blog
 # -----------------------------------------------------------------------------
 
-blog_name: blog # blog_name will be displayed in your blog page
-blog_description: random studies and learnings
+blog_name: Writing
+blog_description: Experiments, implementation notes, and lessons from measurement.
 permalink: /blog/:year/:title/
 lsi: false # produce an index for related posts
 
@@ -199,6 +198,22 @@ exclude:
   - package.json
   - package-lock.json
   - _pages/about_einstein.md
+  - _pages/books.md
+  - _pages/dropdown.md
+  - _pages/teaching.md
+  - _pages/profiles.md
+  - _pages/news.md
+  - _pages/publications.md
+  - _pages/repositories.md
+  - _books/
+  - _news/
+  - _projects/
+  - _teachings/
+  - assets/json/resume.json
+  - assets/pdf/example_pdf.pdf
+  - assets/rendercv/
+  - AGENTS.md
+  - CLAUDE.md
   - purgecss.config.js
   - README.md
   - readme_preview/
@@ -271,15 +286,15 @@ jekyll-archives:
     enabled: [year, tags, categories] # enables year, tag and category archives (remove if you need to disable one of them).
 
 # display_tags: ["formatting", "images", "links", "math", "code", "blockquotes"] # these tags will be displayed on the front page of your blog
-display_categories: ["external-services"] # these categories will be displayed on the front page of your blog
+display_categories: [] # these categories will be displayed on the front page of your blog
 
 # -----------------------------------------------------------------------------
 # Jekyll Scholar
 # -----------------------------------------------------------------------------
 
 scholar:
-  last_name: [Einstein]
-  first_name: [Albert, A.]
+  last_name: [Ng]
+  first_name: [Yi Yan]
 
   style: apa
   locale: en
@@ -652,9 +667,7 @@ third_party_libraries:
 # Get external JSON data
 # -----------------------------------------------------------------------------
 
-jekyll_get_json:
-  - data: resume
-    json: assets/json/resume.json # it can also be an url
+jekyll_get_json: []
 
 jsonresume:
   - basics

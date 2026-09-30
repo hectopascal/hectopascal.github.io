@@ -1,0 +1,30 @@
+<div class="research-list">
+  {% for work in site.data.research %}
+    {% if include.featured != true or work.featured %}
+      <article class="research-entry" id="{{ work.id }}">
+        <div class="research-meta">
+          <span>{{ work.area }}</span><span class="work-status">{{ work.status }}</span>
+        </div>
+        {% if include.detailed %}
+          <h2>{{ work.title }}</h2>
+        {% else %}
+          <h3>{{ work.title }}</h3>
+        {% endif %}
+        <p class="research-summary">{{ work.summary }}</p>
+        <p class="research-contribution"><strong>My contribution.</strong> {{ work.contribution }}</p>
+        {% if include.detailed %}
+          <p>{{ work.detail }}</p>
+          <p class="research-scope">{{ work.scope }}</p>
+        {% endif %}
+        <div class="research-links">
+          {% for link in work.links %}
+            <a href="{% if link.url contains '://' %}{{ link.url }}{% else %}{{ link.url | relative_url }}{% endif %}">
+              {{- link.label }}
+              <span aria-hidden="true">↗</span></a
+            >
+          {% endfor %}
+        </div>
+      </article>
+    {% endif %}
+  {% endfor %}
+</div>
