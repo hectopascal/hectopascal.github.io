@@ -23,13 +23,6 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/blog/";
           },
-        },{id: "nav-cv",
-          title: "CV",
-          description: "Experience and education of Yi Yan Ng, Senior Machine Learning Engineer at Meta in London.",
-          section: "Navigation",
-          handler: () => {
-            window.location.href = "/cv/";
-          },
         },{id: "post-a-vlm-fsdp-and-the-lie-my-strong-scaling-numbers-told-me",
         
           title: "A VLM, FSDP, and the Lie My Strong-Scaling Numbers Told Me",
@@ -61,13 +54,6 @@ ninja.data = [{
         section: 'Socials',
         handler: () => {
           window.open("https://www.linkedin.com/in/ngyiyan", "_blank");
-        },
-      },{
-        id: 'social-cv',
-        title: 'CV',
-        section: 'Socials',
-        handler: () => {
-          window.open("/assets/pdf/yi-yan-ng-cv.pdf", "_blank");
         },
       },{
         id: 'social-x',
