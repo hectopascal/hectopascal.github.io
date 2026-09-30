@@ -2,13 +2,12 @@
 layout: page
 title: CV
 permalink: /cv/
-nav: true
+nav: false
 nav_order: 3
 description: Experience and education of Yi Yan Ng, Senior Machine Learning Engineer at Meta in London.
 ---
 
 <div class="portfolio-links">
-  <a class="portfolio-button" href="{{ '/assets/pdf/yi-yan-ng-cv.pdf' | relative_url }}">Download CV <span class="link-detail">PDF · September 2026</span></a>
   <a href="mailto:ng.yiyan314@gmail.com">Email ↗</a>
 </div>
 
@@ -40,4 +39,4 @@ End-to-end ML development for product classification.
 
 ## Research & engineering
 
-See [selected work]({{ '/research/' | relative_url }}) for project summaries, contribution statements, and links to public code and writing. The PDF contains the full September 2026 record.
+See [selected work]({{ '/research/' | relative_url }}) for project summaries, contribution statements, and links to public code and writing.

@@ -21,9 +21,6 @@
   contribution: Contributed post-training experiments and coding evaluation on OctoThinker-1B, comparing probe-guided selection with GRPO, DAPO, and LILO baselines.
   detail: The study uses logistic-regression probes on model activations to estimate prompt usefulness, with predictor updates as the policy changes during training.
   scope: Collaborative research at the workshop-manuscript stage; this entry describes my experimental contribution.
-  links:
-    - label: Contribution in CV
-      url: /assets/pdf/yi-yan-ng-cv.pdf
 - id: vlm-scaling
   title: VLM training & FSDP scaling
   area: Multimodal learning · Distributed systems
@@ -47,6 +44,3 @@
   contribution: Designed and conducted multi-seed experiments and ablations across D4RL locomotion and AntMaze, studying gradient clipping, energy temperature, and candidate perturbations.
   detail: Investigated optimization instability through training diagnostics and candidate-level analyses.
   scope: Ongoing collaborative research on optimization behavior in generative policies.
-  links:
-    - label: Contribution in CV
-      url: /assets/pdf/yi-yan-ng-cv.pdf
